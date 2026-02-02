@@ -1,10 +1,13 @@
 /**
  * API Configuration
  */
-export const API_BASE_URL =
-  import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000";
+const env = (import.meta as unknown as { env?: Record<string, string> }).env ?? {};
+const isTest =
+  typeof process !== "undefined" && process.env?.NODE_ENV === "test";
 
-if (!import.meta.env.VITE_BACKEND_API_URL) {
+export const API_BASE_URL = env.VITE_BACKEND_API_URL || "http://localhost:3000";
+
+if (!env.VITE_BACKEND_API_URL && !isTest) {
   console.error(
     "VITE_BACKEND_API_URL is not set; defaulting to http://localhost:3000",
   );

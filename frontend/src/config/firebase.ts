@@ -7,13 +7,17 @@ type FirebaseWebConfig = {
   appId?: string;
 };
 
+const env =
+  (import.meta as unknown as { env?: Record<string, string | undefined> }).env ??
+  {};
+
 const firebaseConfig: FirebaseWebConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID,
 };
 
 function getMissingFirebaseConfigKeys(config: FirebaseWebConfig): string[] {
@@ -50,9 +54,7 @@ export const requestForToken = async (): Promise<string | null> => {
     const messaging = await getMessagingInstance();
     if (!messaging) return null;
 
-    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY as
-      | string
-      | undefined;
+    const vapidKey = env.VITE_FIREBASE_VAPID_KEY;
     if (!vapidKey) return null;
 
     if (!("serviceWorker" in navigator)) return null;

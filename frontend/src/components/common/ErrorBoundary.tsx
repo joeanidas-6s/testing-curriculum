@@ -32,6 +32,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render(): ReactNode {
     if (this.state.hasError) {
+      const isDev = Boolean(
+        (import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV,
+      );
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
           <div className="max-w-md w-full text-center">
@@ -63,7 +66,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             >
               Refresh Page
             </button>
-            {import.meta.env.DEV && (
+            {isDev && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-gray-600 hover:text-gray-900">
                   Error details (development only)

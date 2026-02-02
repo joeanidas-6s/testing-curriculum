@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 
+const env = (import.meta as unknown as { env?: Record<string, string> }).env ?? {};
+
 type Notification = {
   type: string;
   payload: Record<string, unknown> | undefined;
@@ -53,7 +55,9 @@ function App() {
   // Admin connect
   const connectAdmin = () => {
     if (adminSocketRef.current?.connected) return;
-    const socket = io(import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000", { withCredentials: true });
+    const socket = io(env.VITE_BACKEND_API_URL || "http://localhost:3000", {
+      withCredentials: true,
+    });
     adminSocketRef.current = socket;
 
     socket.on("connect", () => {
@@ -90,7 +94,9 @@ function App() {
   // User connect
   const connectUser = () => {
     if (userSocketRef.current?.connected) return;
-    const socket = io(import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000", { withCredentials: true });
+    const socket = io(env.VITE_BACKEND_API_URL || "http://localhost:3000", {
+      withCredentials: true,
+    });
     userSocketRef.current = socket;
 
     socket.on("connect", () => {
