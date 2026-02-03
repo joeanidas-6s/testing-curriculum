@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { getTask, updateTask } from "../taskController";
 import Task from "../../models/Task";
 import { notificationService } from "../../notification";
@@ -8,21 +9,21 @@ import {
 } from "../../utils/validators";
 import type { AuthenticatedRequest } from "../../middleware/auth";
 
-jest.mock("../../models/Task");
-jest.mock("../../notification", () => ({
+vi.mock("../../models/Task");
+vi.mock("../../notification", () => ({
   notificationService: {
-    sendToUser: jest.fn(),
+    sendToUser: vi.fn(),
   },
 }));
-jest.mock("../../utils/validators", () => ({
-  isValidObjectId: jest.fn(() => true),
-  isValidTaskStatus: jest.fn(() => ({ valid: true })),
-  isValidTaskTitle: jest.fn(() => ({ valid: true })),
+vi.mock("../../utils/validators", () => ({
+  isValidObjectId: vi.fn(() => true),
+  isValidTaskStatus: vi.fn(() => ({ valid: true })),
+  isValidTaskTitle: vi.fn(() => ({ valid: true })),
 }));
 
 function createMockRes() {
-  const json = jest.fn();
-  const status = jest.fn().mockReturnThis();
+  const json = vi.fn();
+  const status = vi.fn().mockReturnThis();
   return { res: { json, status } as any, json, status };
 }
 
@@ -43,11 +44,11 @@ describe("taskController.getTask", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("returns 400 for invalid task id", async () => {
-    (isValidObjectId as jest.Mock).mockReturnValueOnce(false);
+    (isValidObjectId as ReturnType<typeof vi.fn>).mockReturnValueOnce(false);
     const { res, status, json } = createMockRes();
 
     const req = {
@@ -55,7 +56,7 @@ describe("taskController.getTask", () => {
       user: { role: "user", tenantId: "tenant-1", userId: "user-1" },
     } as unknown as AuthenticatedRequest;
 
-    const next = jest.fn();
+    const next = vi.fn();
 
     await getTask(req, res, next);
 
@@ -68,15 +69,15 @@ describe("taskController.getTask", () => {
   });
 
   it("returns task when found", async () => {
-    (isValidObjectId as jest.Mock).mockReturnValue(true);
-    (Task.findOne as unknown as jest.Mock).mockResolvedValue(mockTask);
+    (isValidObjectId as ReturnType<typeof vi.fn>).mockReturnValue(true);
+    (Task.findOne as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(mockTask);
 
     const { res, json } = createMockRes();
     const req = {
       params: { id: mockTask._id },
       user: { role: "user", tenantId: "tenant-1", userId: "user-1" },
     } as unknown as AuthenticatedRequest;
-    const next = jest.fn();
+    const next = vi.fn();
 
     await getTask(req, res, next);
 
@@ -101,7 +102,7 @@ describe("taskController.getTask", () => {
 
 describe("taskController.updateTask", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("updates status and sends notification to assignee when actor is different", async () => {
@@ -119,12 +120,12 @@ describe("taskController.updateTask", () => {
       attachments: [],
       createdAt: new Date(),
       updatedAt: new Date(),
-      save: jest.fn().mockResolvedValue(undefined),
+      save: vi.fn().mockResolvedValue(undefined),
     };
 
-    (isValidObjectId as jest.Mock).mockReturnValue(true);
-    (isValidTaskStatus as jest.Mock).mockReturnValue({ valid: true });
-    (Task.findOne as unknown as jest.Mock).mockResolvedValue(savedTask);
+    (isValidObjectId as ReturnType<typeof vi.fn>).mockReturnValue(true);
+    (isValidTaskStatus as ReturnType<typeof vi.fn>).mockReturnValue({ valid: true });
+    (Task.findOne as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(savedTask);
 
     const { res, json } = createMockRes();
     const req = {
@@ -136,7 +137,7 @@ describe("taskController.updateTask", () => {
         userId: "admin-1",
       },
     } as unknown as AuthenticatedRequest;
-    const next = jest.fn();
+    const next = vi.fn();
 
     await updateTask(req, res, next);
 

@@ -1,9 +1,10 @@
+import { vi } from "vitest";
 import { ApiError, successResponse, errorResponse } from "../errorUtils";
 
 function createMockRes() {
-  const json = jest.fn();
+  const json = vi.fn();
   const res = {
-    status: jest.fn().mockReturnThis(),
+    status: vi.fn().mockReturnThis(),
     json,
   } as any;
   return { res, json };

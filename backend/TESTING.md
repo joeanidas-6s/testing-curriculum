@@ -1,8 +1,8 @@
-## Backend Unit Testing with Jest
+## Backend Unit Testing with Vitest
 
-This document explains **how Jest unit testing works in the backend** and how it is used in this project. If you read this file and the example tests, you should understand:
+This document explains **how Vitest unit testing works in the backend** and how it is used in this project. If you read this file and the example tests, you should understand:
 
-- What Jest is doing
+- What Vitest is doing
 - How to test **pure logic**
 - How to test **Express-style helpers**
 - How to test a **controller/route handler** by mocking:
@@ -18,42 +18,41 @@ From `backend/`:
 
 ```bash
 npm install   # first time only
-npm test      # run all Jest tests
+npm test      # run all Vitest tests once
+npm run test:watch   # watch mode
 ```
 
 `package.json` key parts:
 
 ```json
 "scripts": {
-  "test": "jest",
+  "test": "vitest run",
+  "test:watch": "vitest",
   ...
 },
 "devDependencies": {
-  "jest": "^29.7.0",
-  "ts-jest": "^29.2.5",
-  "@types/jest": "^29.5.14",
+  "vitest": "^3.2.4",
   ...
 }
 ```
 
 So:
 
-- Jest is the test runner.
-- `ts-jest` compiles TypeScript for Jest.
+- Vitest is the test runner.
 - Tests are written in `.test.ts` files under `src/**/__tests__/`.
 
 ---
 
-### 2. Jest configuration (big picture)
+### 2. Vitest configuration (big picture)
 
-File: `jest.config.cjs`
+File: `vitest.config.ts`
 
-- `preset: "ts-jest"` – compile `.ts` files for Jest.
-- `testEnvironment: "node"` – Node environment (no browser).
-- `roots: ["<rootDir>/src"]` – tests live under `src/`.
-- `testMatch: ["**/__tests__/**/*.test.ts"]` – standard Jest pattern.
+- **environment: "node"** – Node environment (no browser).
+- **include**: `["src/**/__tests__/**/*.test.ts"]` – test file pattern.
+- **globals: true** – `describe`, `it`, `expect`, `vi` are available globally.
+- **clearMocks: true** – mocks are cleared between tests.
 
-You usually don’t touch this much; it just wires Jest + TypeScript together.
+You usually don’t touch this much; it just wires Vitest + TypeScript together.
 
 ---
 
@@ -97,10 +96,12 @@ Key idea: **mock the Express `res` object**.
 In the test we build:
 
 ```ts
+import { vi } from "vitest";
+
 function createMockRes() {
-  const json = jest.fn();
+  const json = vi.fn();
   const res = {
-    status: jest.fn().mockReturnThis(),
+    status: vi.fn().mockReturnThis(),
     json,
   } as any;
   return { res, json };
@@ -144,14 +145,15 @@ The interesting part: **mocking `nodemailer`**.
 In the test:
 
 ```ts
+import { vi } from "vitest";
 import nodemailer from "nodemailer";
 
-jest.mock("nodemailer", () => {
-  const sendMail = jest.fn().mockResolvedValue({ messageId: "mock-id" });
+vi.mock("nodemailer", () => {
+  const sendMail = vi.fn().mockResolvedValue({ messageId: "mock-id" });
   return {
     __esModule: true,
     default: {
-      createTransport: jest.fn(() => ({
+      createTransport: vi.fn(() => ({
         sendMail,
       })),
     },
@@ -173,7 +175,7 @@ Then:
 
   ```ts
   const transportInstance = (nodemailer as any).createTransport() as {
-    sendMail: jest.Mock;
+    sendMail: ReturnType<typeof vi.fn>;
   };
 
   await sendEmail({
@@ -194,7 +196,7 @@ Then:
 
   ```ts
   const transportInstance = (nodemailer as any).createTransport() as {
-    sendMail: jest.Mock;
+    sendMail: ReturnType<typeof vi.fn>;
   };
   transportInstance.sendMail.mockClear();
 
@@ -238,16 +240,18 @@ Goals:
 At the top of the test file:
 
 ```ts
-jest.mock("../../models/Task");
-jest.mock("../../notification", () => ({
+import { vi } from "vitest";
+
+vi.mock("../../models/Task");
+vi.mock("../../notification", () => ({
   notificationService: {
-    sendToUser: jest.fn(),
+    sendToUser: vi.fn(),
   },
 }));
-jest.mock("../../utils/validators", () => ({
-  isValidObjectId: jest.fn(() => true),
-  isValidTaskStatus: jest.fn(() => ({ valid: true })),
-  isValidTaskTitle: jest.fn(() => ({ valid: true })),
+vi.mock("../../utils/validators", () => ({
+  isValidObjectId: vi.fn(() => true),
+  isValidTaskStatus: vi.fn(() => ({ valid: true })),
+  isValidTaskTitle: vi.fn(() => ({ valid: true })),
 }));
 ```
 
@@ -255,8 +259,8 @@ Also, we reuse `createMockRes` for Express-style `res`:
 
 ```ts
 function createMockRes() {
-  const json = jest.fn();
-  const status = jest.fn().mockReturnThis();
+  const json = vi.fn();
+  const status = vi.fn().mockReturnThis();
   return { res: { json, status } as any, json, status };
 }
 ```
@@ -294,7 +298,7 @@ Steps in the test:
 1. Mock validators (`isValidObjectId`, `isValidTaskStatus`) to always accept inputs.
 2. Mock `Task.findOne` to return a fake `savedTask` object with:
    - `tenantId`, `userId`, `createdBy`
-   - Methods like `save()` mocked.
+   - Methods like `save()` mocked with `vi.fn()`.
 3. Build `req`:
    - `params.id` is the task ID.
    - `body.status = "completed"`.
@@ -332,18 +336,17 @@ The general pattern is:
 
 1. Import the unit under test (function, class, controller).
 2. Mock:
-   - Mongoose models (`jest.mock("../../models/Model")`)
+   - Mongoose models (`vi.mock("../../models/Model")`)
    - External services (`notificationService`, `nodemailer`, etc.)
    - Helpers/validators as needed.
 3. Create fake `req`, `res`, and `next`:
    - `req` is a plain object (`as any`) with only the fields you need.
-   - `res` uses `jest.fn()`s for `status` and `json`.
-   - `next` is usually `jest.fn()`.
+   - `res` uses `vi.fn()`s for `status` and `json`.
+   - `next` is usually `vi.fn()`.
 4. Call the function.
 5. Assert:
    - `res.status` / `res.json` calls.
    - Mongoose/static method calls (e.g., `Task.findOne`).
    - Service calls (e.g., `notificationService.sendToUser`).
 
-Working through these examples will show you the **core Jest unit testing patterns** used in a real Node + Express + MongoDB backend: pure logic, helpers, external services, and full controller logic with mocked dependencies. 
-
+Working through these examples will show you the **core Vitest unit testing patterns** used in a real Node + Express + MongoDB backend: pure logic, helpers, external services, and full controller logic with mocked dependencies.

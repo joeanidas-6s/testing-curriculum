@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import nodemailer from "nodemailer";
 import {
   sendEmail,
@@ -5,12 +6,12 @@ import {
   sendPasswordResetEmail,
 } from "../emailService";
 
-jest.mock("nodemailer", () => {
-  const sendMail = jest.fn().mockResolvedValue({ messageId: "mock-id" });
+vi.mock("nodemailer", () => {
+  const sendMail = vi.fn().mockResolvedValue({ messageId: "mock-id" });
   return {
     __esModule: true,
     default: {
-      createTransport: jest.fn(() => ({
+      createTransport: vi.fn(() => ({
         sendMail,
       })),
     },
@@ -26,7 +27,7 @@ describe("emailService", () => {
 
   it("sendEmail delegates to nodemailer transport", async () => {
     const transportInstance = (nodemailer as any).createTransport() as {
-      sendMail: jest.Mock;
+      sendMail: ReturnType<typeof vi.fn>;
     };
 
     await sendEmail({
@@ -45,7 +46,7 @@ describe("emailService", () => {
 
   it("sendPasswordResetEmail builds expected email", async () => {
     const transportInstance = (nodemailer as any).createTransport() as {
-      sendMail: jest.Mock;
+      sendMail: ReturnType<typeof vi.fn>;
     };
     transportInstance.sendMail.mockClear();
 
