@@ -1,19 +1,18 @@
-## Frontend Unit Testing with Jest
+## Frontend Unit Testing with Vitest
 
-This document explains **how Jest-based unit testing works in this frontend**, and how to read/write tests so you understand what Jest is doing in a real Vite + React + TypeScript project.
+This document explains **how Vitest-based unit testing works in this frontend**, and how to read/write tests so you understand what Vitest is doing in a real Vite + React + TypeScript project.
 
 ---
 
-### 1. What Jest is used for here
+### 1. What Vitest is used for here
 
-- **Jest** is the test runner and assertion library.
-- **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`) is used to:
+- **Vitest** is the test runner and assertion library (Vite-native, fast).
+- **React Testing Library** (`@testing-library/react`, `@testing-library/user-event`) and a DOM matcher package are used to:
   - Render components in a realistic way
   - Interact with them like a user (clicks, typing)
-  - Assert on what appears in the DOM
-- **ts-jest** compiles TypeScript test files for Jest.
+  - Assert on what appears in the DOM (e.g. `toBeInTheDocument`)
 
-You use Jest to test:
+You use Vitest to test:
 
 - Small UI components (`Loader`, `ErrorMessage`, `Navbar`)
 - Routing and auth guards (`ProtectedRoute`)
@@ -29,52 +28,38 @@ From `frontend/`:
 ```bash
 npm test            # run all tests once
 npm run test:watch  # watch mode
-npm run test:ci     # serial mode for CI
+npm run test:ci     # single run for CI
 ```
 
 `package.json` scripts:
 
 ```json
 "scripts": {
-  "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-  "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
-  "test:ci": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
+  "test": "vitest",
+  "test:watch": "vitest --watch",
+  "test:ci": "vitest run"
 }
 ```
 
-Because this project is ESM + Vite, Jest is run with `NODE_OPTIONS=--experimental-vm-modules` and a special config.
-
 ---
 
-### 3. Jest configuration (high level)
+### 3. Vitest configuration (high level)
 
-File: `jest.config.cjs`
+Vitest is configured inside `vite.config.ts` under the `test` key:
 
-- Uses `ts-jest` ESM preset:
-  - Compiles `.ts`/`.tsx` files for Jest
-  - Respects `tsconfig.jest.json`
-- Test environment: **`jsdom`** (browser-like environment for React).
-- `setupFilesAfterEnv`: runs `src/test/setupTests.ts` before each test.
-- `moduleNameMapper`:
-  - Resolves `@/` to `src/` (same alias as Vite)
-  - Mocks CSS and static assets so imports don’t crash tests.
+- **environment: "jsdom"** – browser-like environment for React.
+- **setupFiles** – runs `src/test/setupTests.ts` before tests.
+- **include** – `**/?(*.)+(spec|test).(ts|tsx)`.
+- **globals: true** – `describe`, `it`, `expect`, `vi` are available globally.
+- **css: true** – CSS is processed so imports don’t crash.
 
-You don’t usually edit this once it works; you just use it.
+Path alias `@/` → `src/` is shared with the main Vite config.
 
 ---
 
 ### 4. TypeScript config for tests
 
-File: `tsconfig.jest.json`
-
-- Extends the main app config.
-- Adds types:
-  - `jest`
-  - `@testing-library/jest-dom`
-  - `node`
-- Enables `esModuleInterop` and `allowSyntheticDefaultImports` for smooth imports.
-
-This makes TypeScript understand Jest globals and React types in test files.
+`tsconfig.app.json` includes `"vitest/globals"` in `types` so TypeScript understands Vitest globals (`describe`, `it`, `expect`, `vi`) in test files.
 
 ---
 
@@ -84,7 +69,7 @@ File: `src/test/setupTests.ts`
 
 What it does:
 
-- Imports `@testing-library/jest-dom` to extend Jest matchers (e.g. `toBeInTheDocument`).
+- Imports the DOM matcher package to extend Vitest’s `expect` with DOM matchers (e.g. `toBeInTheDocument`).
 - Adds `window.matchMedia` so libraries that read it don’t break.
 - Adds `TextEncoder` / `TextDecoder` polyfills for React Router and other libs.
 - Provides a default `fetch` implementation that throws with a clear message if you forgot to mock it in a test.
@@ -131,7 +116,7 @@ Key patterns used:
 
 - `render(<Loader />)` – draw the component.
 - `screen.getByText("Loading...")` – query DOM by text.
-- `expect(...).toBeInTheDocument()` – Jest DOM matcher.
+- `expect(...).toBeInTheDocument()` – DOM matcher added in setup (extends Vitest’s expect).
 
 What you learn:
 
@@ -158,11 +143,12 @@ Key ideas:
   - No token → redirected to `/login`.
   - Valid token → `/auth/me` returns a user → children render.
   - Invalid token → `/auth/me` returns 401 → redirect to `/login`.
+- Use `vi.spyOn(globalThis, "fetch")` to mock `fetch`.
 
 What you learn:
 
 - How to write tests that **span routing and auth logic** without a browser.
-- How to mock `fetch` safely in Jest.
+- How to mock `fetch` safely in Vitest.
 
 ---
 
@@ -188,7 +174,7 @@ Concepts:
 
 File: `src/lib/__tests__/httpClient.test.ts`
 
-- Mocks `global.fetch` to a local helper that returns JSON.
+- Mocks `global.fetch` with `vi.spyOn(globalThis, "fetch")`.
 - Tests:
   - Auth header is added when required.
   - `skipAuth: true` bypasses auth.
@@ -208,7 +194,7 @@ Files:
 
 They:
 
-- Mock `httpClient.post` / `httpClient.get`.
+- Mock `httpClient.post` / `httpClient.get` with `vi.spyOn(...)`.
 - Verify:
   - Correct endpoints and payloads are used.
   - Tokens are stored in `localStorage` (auth).
@@ -228,8 +214,7 @@ What you learn:
   - or `src/components/Feature/__tests__/Thing.test.tsx`
 - Follow the same patterns:
   - Use `renderWithProviders` for routed/components needing providers.
-  - Mock `fetch` / services when needed.
+  - Mock `fetch` / services with `vi.spyOn` or `vi.mock` when needed.
   - Assert on **behavior and DOM**, not implementation details or CSS classes.
 
-If you work through the existing tests, you’ll see **all the main Jest patterns** applied to a real React + Vite app: rendering, routing, state, services, and mocking. This is enough to understand what Jest-based unit testing means in this frontend and how to extend it. 
-
+If you work through the existing tests, you’ll see **all the main Vitest patterns** applied to a real React + Vite app: rendering, routing, state, services, and mocking. This is enough to understand what Vitest-based unit testing means in this frontend and how to extend it.

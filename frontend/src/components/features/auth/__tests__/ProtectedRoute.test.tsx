@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { Routes, Route } from "react-router-dom";
 import { renderWithProviders } from "@/test/utils/renderWithProviders";
@@ -39,7 +39,7 @@ describe("ProtectedRoute", () => {
     localStorage.clear();
     // reset store to logged-out
     useAuthStore.setState({ user: null, token: null, isAuthenticated: false });
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("redirects to /login when no token", async () => {
@@ -51,7 +51,7 @@ describe("ProtectedRoute", () => {
   it("renders children when authenticated and token is valid", async () => {
     useAuthStore.setState({ isAuthenticated: true, token: "token-123" });
 
-    const fetchMock = jest
+    const fetchMock = vi
       .spyOn(globalThis as unknown as { fetch: typeof globalThis.fetch }, "fetch")
       .mockResolvedValue(
         jsonFetchResponse(200, { user: { id: "u1" } }),
@@ -66,7 +66,7 @@ describe("ProtectedRoute", () => {
   it("redirects to /login when token validation fails", async () => {
     useAuthStore.setState({ isAuthenticated: true, token: "bad-token" });
 
-    jest
+    vi
       .spyOn(globalThis as unknown as { fetch: typeof globalThis.fetch }, "fetch")
       .mockResolvedValue(
         jsonFetchResponse(401, { error: "Unauthorized" }),

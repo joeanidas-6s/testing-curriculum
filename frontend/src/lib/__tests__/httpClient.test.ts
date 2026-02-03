@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 import { httpClient } from "../httpClient";
 import { useAuthStore } from "@/store/authStore";
 import { UnauthorizedError } from "@/types/errors";
@@ -18,14 +18,14 @@ function jsonFetchResponse(status: number, body: unknown) {
 
 describe("httpClient", () => {
   beforeEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     useAuthStore.setState({ user: null, token: null, isAuthenticated: false });
   });
 
   it("adds Authorization header when not skipAuth", async () => {
     useAuthStore.setState({ isAuthenticated: true, token: "t-123" });
 
-    const fetchMock = jest
+    const fetchMock = vi
       .spyOn(globalThis as unknown as { fetch: typeof globalThis.fetch }, "fetch")
       .mockResolvedValue(
         jsonFetchResponse(200, { ok: true }),
@@ -41,7 +41,7 @@ describe("httpClient", () => {
   });
 
   it("does not require auth when skipAuth is true", async () => {
-    const fetchMock = jest
+    const fetchMock = vi
       .spyOn(globalThis as unknown as { fetch: typeof globalThis.fetch }, "fetch")
       .mockResolvedValue(
         jsonFetchResponse(200, { ok: true }),

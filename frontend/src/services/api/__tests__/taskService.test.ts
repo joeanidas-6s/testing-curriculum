@@ -1,15 +1,15 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 import { taskService } from "../taskService";
 import { httpClient } from "@/lib/httpClient";
 import { API_ENDPOINTS } from "@/config/api";
 
 describe("taskService", () => {
   beforeEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("builds query string and normalizes tasks", async () => {
-    const get = jest.spyOn(httpClient, "get").mockResolvedValue({
+    const get = vi.spyOn(httpClient, "get").mockResolvedValue({
       success: true,
       page: 2,
       limit: 10,

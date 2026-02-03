@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ErrorBoundary } from "../ErrorBoundary";
 
@@ -9,7 +9,7 @@ function Boom(): never {
 describe("ErrorBoundary", () => {
   it("renders fallback UI when a child throws", () => {
     // silence React error boundary logs in test output
-    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     render(
       <ErrorBoundary>

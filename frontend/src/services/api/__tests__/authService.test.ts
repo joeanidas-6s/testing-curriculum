@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 import { authService } from "../authService";
 import { httpClient } from "@/lib/httpClient";
 import { API_ENDPOINTS, STORAGE_KEYS } from "@/config/api";
@@ -6,11 +6,11 @@ import { API_ENDPOINTS, STORAGE_KEYS } from "@/config/api";
 describe("authService", () => {
   beforeEach(() => {
     localStorage.clear();
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("login calls API with skipAuth and stores token", async () => {
-    const post = jest.spyOn(httpClient, "post").mockResolvedValue({
+    const post = vi.spyOn(httpClient, "post").mockResolvedValue({
       message: "ok",
       token: "token-1",
       user: { id: "u1", name: "Jane", email: "jane@example.com" },
