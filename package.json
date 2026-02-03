@@ -9,7 +9,10 @@
     "start": "npm run start --prefix backend",
     "seed": "npm run seed --prefix backend",
     "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",
-    "test": "npm run test --prefix backend && npm run test:ci --prefix frontend"
+    "test": "npm run test --prefix backend && npm run test:ci --prefix frontend",
+    "test:coverage": "concurrently \"npm run test:coverage --prefix backend\" \"npm run test:coverage --prefix frontend\"",
+    "test:ui": "concurrently \"npm run test:ui --prefix backend\" \"npm run test:ui --prefix frontend\"",
+    "test:watch": "concurrently \"npm run test:watch --prefix backend\" \"npm run test:watch --prefix frontend\""
   },
   "workspaces": [
     "backend",
